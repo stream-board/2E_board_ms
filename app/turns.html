@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Project Architecture Turns</title>
+    <link rel="stylesheet" href="">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-confirm/3.3.0/jquery-confirm.min.css">
+</head>
+<body>
+    <div class="chat js-feak-info" data-sender="usuario">
+    <h1>Stream board turns</h1>
+    <button type="" class="js-ask-permission" data-user-id="1" data-user-nick="Usuario12">Pedir permiso</button>
+    <button type="" class="js-set-admin" data-user-id="3" data-user-nick="AdminRoom">Ser administrador</button>
+    <button type="" class="js-register-room" data-user-id="1" data-user-nick="Usuario12">Activarme en la sala</button>
+    <button type="" class="js-reset-board">Reset permisos tablero a admin</button>
+
+    </div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-confirm/3.3.0/jquery-confirm.min.js"></script>
+    <script type="text/javascript">
+    $(function(){
+    'use strict'
+
+      var socket = io();
+      //ask if user is the room's admin: yes-> set admin ? -> register id
+
+      //if: yes:
+      $('.js-set-admin').on('click', function() {
+          var adminId = $(this).data('user-id');
+          var data = {
+            adminId: adminId
+          };
+          socket.emit('setAdminId', data);
+      });
+      //else:
+      $('.js-register-room').on('click', function() {
+          var userId = $(this).data('user-id');
+          var userNick = $(this).data('user-nick');
+          var data = {
+            userNick: userNick,
+            userId: userId
+          };
+          console.log(data);
+          socket.emit('registerId', data);
+      });
+
+      $('.js-ask-permission').on('click', function() {
+          var userId = $(this).data('user-id');
+          var userNick = $(this).data('user-nick');
+          var data = {
+            userNick: userNick,
+            userId: userId
+          }
+          socket.emit('askForBoard', data);
+      });
+
+      $('.js-reset-board').on('click', function() {
+          socket.emit('resetBoard');
+      });
+
+      socket.on('askForBoard', function(data) {
+        $.confirm({
+          title: 'Board permissions',
+          content: 'User ' + data.userNick + ' want board permissions',
+          buttons: {
+            confirm: function () {
+              data.adminAns = true;
+              socket.emit('answerForBoard', data);
+            },
+            cancel: function () {
+              data.adminAns = false;
+              socket.emit('answerForBoard', data);
+            }
+          }
+        });
+      });
+
+      socket.on('answerForBoard', function (msg) {
+        $.alert({
+          title: 'Permisos Tablero',
+          content: msg,
+        });
+      });
+
+      socket.on('resetBoard', function () {
+        $.alert({
+          title: 'Permisos Tablero',
+          content: 'Board owner admin',
+        });
+      });
+  });
+</script>
+</body>
+
+</html>

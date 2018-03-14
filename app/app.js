@@ -18,53 +18,46 @@ setImmediate(() => {
 })
 
 app.get('/turns', (req, res) => {
-  res.sendFiles(__dirname + '/test/turns.html');
+  res.sendFile(__dirname + '/turns.html');
 });
 
 io.on('connection', (socket) => {
   socket.on('join', (data) => {
     socket.join(data.room);
-  });
+  })
 
   socket.on('path', (data) => {
     let room = Object.keys(socket.rooms)[0];
     socket.to(room).broadcast.emit('path', data);
-  });
+  })
 
   socket.on('line', (data) => {
     let room = Object.keys(socket.rooms)[0];
     socket.to(room).broadcast.emit('line', data);
-  });
+  })
 
   socket.on('registerId', (data) => {
-    redisClient.set(data.userNick, socket.id, () => {
-      console.log(data.userNick + 'in redis');
-    });
-  });
+    redisClient.del(data.userNick, (err, reply) => {
+      redisClient.set(data.userNick, socket.id);
+    })
+  })
 
   socket.on('setAdminId', (data) => {
-    redisClient.set('admin', socket.id, () => {
-        console.log('admin id setted');
-    });
-  });
+    redisClient.del('admin', (err, reply) => {
+      redisClient.set('admin', socket.id);
+    })
+  })
 
   socket.on('askForBoard', (data) => {
-    console.log('user ' + data.userNick + ' ask');
     redisClient.get('admin', (err, socketId) => {
-      console.log(socketId);
       socket.to(socketId).emit('askForBoard', data);
     });
-  });
+  })
 
   socket.on('answerForBoard', (data) => {
-    console.log(data.adminAns);
     let msg = 'Tu solicitud del tablero fue rechazada';
 
-    /*if(adminAns) {
-      msg = 'Tienes permiso para usar el tablero';
-    };*/
-
-    redisClient.get(userNick, (err, socketId) => {
+    redisClient.get(data.userNick, (err, socketId) => {
       if(data.adminAns) {
         msg = 'Tienes permiso para usar el tablero';
         redisClient.set('drawer', socketId, () => {
@@ -73,8 +66,15 @@ io.on('connection', (socket) => {
       };
 
       socket.to(socketId).emit('answerForBoard',msg);
-    })
-  });
+    });
+  })
+
+  socket.on('resetBoard', () => {
+    redisClient.get('admin', (err, socketId) => {
+      redisClient.set('drawer', socketId);
+      io.to(socketId).emit('resetBoard');
+    });
+  })
 });
 
 export default app
