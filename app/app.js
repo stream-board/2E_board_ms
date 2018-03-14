@@ -1,6 +1,5 @@
 import http from 'http'
 import { env, mongo, port, ip, apiRoot } from './config'
-import mongoose from './services/mongoose'
 import express from './services/express'
 import api from './api'
 
@@ -12,14 +11,15 @@ const redis = require('redis');
 const redisClient = redis.createClient(6379, 'redis');
 
 
-mongoose.connect(mongo.uri, { useMongoClient: true })
-mongoose.Promise = Promise
-
 setImmediate(() => {
   server.listen(port, ip, () => {
     console.log('Express server listening on http://%s:%d, in %s mode', ip, port, env)
   })
 })
+
+app.get('/turns', (req, res) => {
+  res.sendFiles(__dirname + '/test/turns.html');
+});
 
 io.on('connection', (socket) => {
   socket.on('join', (data) => {
@@ -36,39 +36,39 @@ io.on('connection', (socket) => {
     socket.to(room).broadcast.emit('line', data);
   });
 
-  socket.on('registerId', (userNick, userId) => {
-    redisClient.set(userNick, socket.id, () => {
-      console.log(userNick + 'in redis');
+  socket.on('registerId', (data) => {
+    redisClient.set(data.userNick, socket.id, () => {
+      console.log(data.userNick + 'in redis');
     });
   });
 
-  socket.on('setAdminId', (userId) => {
+  socket.on('setAdminId', (data) => {
     redisClient.set('admin', socket.id, () => {
         console.log('admin id setted');
     });
   });
 
-  socket.on('askForBoard', (userId, userNick) => {
-    console.log('user ' + userNick + ' ask');
+  socket.on('askForBoard', (data) => {
+    console.log('user ' + data.userNick + ' ask');
     redisClient.get('admin', (err, socketId) => {
       console.log(socketId);
-      socket.to(socketId).emit('askForBoard', userId, userNick);
+      socket.to(socketId).emit('askForBoard', data);
     });
   });
 
-  socket.on('answerForBoard', (adminRes, userId, userNick) => {
-    console.log(adminRes);
+  socket.on('answerForBoard', (data) => {
+    console.log(data.adminAns);
     let msg = 'Tu solicitud del tablero fue rechazada';
 
-    /*if(adminRes) {
+    /*if(adminAns) {
       msg = 'Tienes permiso para usar el tablero';
     };*/
 
     redisClient.get(userNick, (err, socketId) => {
-      if(adminRes) {
+      if(data.adminAns) {
         msg = 'Tienes permiso para usar el tablero';
         redisClient.set('drawer', socketId, () => {
-          console.log('Drawer '+ userNick);
+          console.log('Drawer '+ data.userNick);
         });
       };
 

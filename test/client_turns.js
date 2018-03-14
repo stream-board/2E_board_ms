@@ -7,32 +7,43 @@ $(function(){
     //if: yes:
     $('.js-set-admin').on('click', function() {
         var adminId = $(this).data('user-id');
-        socket.emit('setAdminId', adminId);
+        var data = JSON.stringify({
+          adminId = $(this).data('user-id')
+        });
+        socket.emit('setAdminId', data);
     });
     //else:
     $('.js-register-room').on('click', function() {
         var userId = $(this).data('user-id');
         var userNick = $(this).data('user-nick');
-        socket.emit('registerId', userNick, userId);
+        var data = JSON.stringify({
+          userNick = $(this).data('user-nick'),
+          userId = $(this).data('user-id')
+        })
+        socket.emit('registerId', data);
     });
 
     $('.js-ask-permission').on('click', function() {
         var userId = $(this).data('user-id');
         var userNick = $(this).data('user-nick');
-        socket.emit('askForBoard', userId, userNick);
+        var data = JSON.stringify({
+          userNick = $(this).data('user-nick'),
+          userId = $(this).data('user-id')
+        })
+        socket.emit('askForBoard', data);
     });
 
-    socket.on('askForBoard', function(userId, userNick) {
+    socket.on('askForBoard', function(data) {
         $.confirm({
             title: 'Board permissions',
-            content: 'User ' + userNick + ' want board permissions',
+            content: 'User ' + data.userNick + ' want board permissions',
             buttons: {
                 confirm: function () {
                     //do http POST request to board-ms in .done do this
-                    socket.emit('answerForBoard', true, userId, userNick);
+                    socket.emit('answerForBoard', true, data);
                 },
                 cancel: function () {
-                    socket.emit('answerForBoard', false, userId, userNick);
+                    socket.emit('answerForBoard', false, data);
                 }
             }
         });
