@@ -1,0 +1,11 @@
+version: "2"
+services:
+    redis:
+        image: redis:latest
+
+    pj_board_ms:
+        build: .
+        ports:
+            - "8000:3000"
+        depends_on:
+            - redis
