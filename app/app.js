@@ -43,36 +43,55 @@ io.on('connection', (socket) => {
   })
 
   socket.on('setAdminId', (data) => {
-    redisClient.del('admin', (err, reply) => {
-      redisClient.set('admin', socket.id);
+    let room = Object.keys(socket.rooms)[0];
+
+    let roomData = JSON.stringify({
+      'adminSocketId': socket.id,
+      'drawerSocketId': socket.id
     })
+    redisClient.set(room, roomData);
   })
 
   socket.on('askForBoard', (data) => {
-    redisClient.get('admin', (err, socketId) => {
-      socket.to(socketId).emit('askForBoard', data);
+    let room = Object.keys(socket.rooms)[0];
+
+    redisClient.get(room, (err, roomData) => {
+      let jsonData = JSON.parse(roomData);
+      socket.to(jsonData.adminSocketId).emit('askForBoard', data);
     });
   })
 
   socket.on('answerForBoard', (data) => {
+    let room = Object.keys(socket.rooms)[0];
     let msg = 'Tu solicitud del tablero fue rechazada';
 
     redisClient.get(data.userNick, (err, socketId) => {
       if(data.adminAns) {
+        let roomData = JSON.stringify({
+          'adminSocketId': socket.id,
+          'drawerSocketId': socketId
+        })
+
         msg = 'Tienes permiso para usar el tablero';
-        redisClient.set('drawer', socketId, () => {
-          console.log('Drawer '+ data.userNick);
-        });
-      };
+        redisClient.set(room, roomData);
+      }
 
       socket.to(socketId).emit('answerForBoard',msg);
-    });
+    })
   })
 
   socket.on('resetBoard', () => {
-    redisClient.get('admin', (err, socketId) => {
-      redisClient.set('drawer', socketId);
-      io.to(socketId).emit('resetBoard');
+    let room = Object.keys(socket.rooms)[0];
+
+    redisClient.get(room, (err, roomData) => {
+      let jsonData = JSON.parse(roomData);
+      let adminSocketId = jsonData.adminSocketId;
+
+      jsonData.drawer = adminSocketId;
+      let updateRoom = JSON.stringify(jsonData);
+
+      redisClient.set(room, updateRoom);
+      io.to(adminSocketId).emit('resetBoard');
     });
   })
 });
