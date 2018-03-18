@@ -1,7 +1,6 @@
-FROM node:9
+FROM node:carbon-slim
 
 ENV REDIS_HOST "redis"
-ENV MASTER_KEY "masterKey"
 
 RUN mkdir /board-ms
 WORKDIR /board-ms

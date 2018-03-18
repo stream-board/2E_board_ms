@@ -22,57 +22,87 @@ app.get('/turns', (req, res) => {
 });
 
 io.on('connection', (socket) => {
-  socket.on('join', (data) => {
-    socket.join(data.room);
+  var room = socket.handshake['query']['room'];
+  var nick = socket.handshake['query']['nick'];
+
+  if(!io.sockets.adapter.rooms[room]) {
+    let roomData = {
+      admin: socket.id,
+      drawer: socket.id
+    }
+    redisClient.del(room, (err, reply) => {
+      redisClient.set(room, JSON.stringify(roomData));
+    })
+    io.to(socket.id).emit('admin');
+  }
+
+  redisClient.del(socket.id, (err, reply) => {
+    redisClient.set(socket.id, nick);
   })
 
-  socket.on('path', (data) => {
-    let room = Object.keys(socket.rooms)[0];
-    socket.to(room).broadcast.emit('path', data);
-  })
+  socket.join(room);
 
-  socket.on('line', (data) => {
-    let room = Object.keys(socket.rooms)[0];
-    socket.to(room).broadcast.emit('line', data);
-  })
-
-  socket.on('registerId', (data) => {
-    redisClient.del(data.userNick, (err, reply) => {
-      redisClient.set(data.userNick, socket.id);
+  socket.on('draw', (data) => {
+    redisClient.get(room, (err, roomData) => {
+      let roomObj = JSON.parse(roomData);
+      if(socket.id === roomObj.drawer){
+        socket.to(room).broadcast.emit('draw', data);
+      }
     })
   })
 
-  socket.on('setAdminId', (data) => {
-    redisClient.del('admin', (err, reply) => {
-      redisClient.set('admin', socket.id);
-    })
-  })
-
-  socket.on('askForBoard', (data) => {
-    redisClient.get('admin', (err, socketId) => {
-      socket.to(socketId).emit('askForBoard', data);
+  socket.on('askForBoard', () => {
+    redisClient.get(room, (err, roomData) => {
+      let roomObj = JSON.parse(roomData);
+      redisClient.get(socket.id, (err, nick) => {
+        if(socket.id !== roomObj.admin){
+          socket.to(roomObj.admin).emit('askForBoard', {nick: nick, socketId: socket.id});
+        }
+      })
     });
   })
 
   socket.on('answerForBoard', (data) => {
-    let msg = 'Tu solicitud del tablero fue rechazada';
-
-    redisClient.get(data.userNick, (err, socketId) => {
-      if(data.adminAns) {
-        msg = 'Tienes permiso para usar el tablero';
-        redisClient.set('drawer', socketId, () => {
-          console.log('Drawer '+ data.userNick);
-        });
+    redisClient.get(room, (err, roomData) => {
+      let roomObj = JSON.parse(roomData);
+      if(data.answer && roomObj.admin === socket.id) {
+        let exDrawer = roomObj.drawer;
+        roomObj.drawer = data.socketId;
+        redisClient.set(room, JSON.stringify(roomObj));
+        socket.to(data.socketId).emit('answerForBoard',data.answer);
+        socket.to(exDrawer).emit('lostPermission',data.answer);
       };
-
-      socket.to(socketId).emit('answerForBoard',msg);
-    });
+    })
+    
   })
 
   socket.on('resetBoard', () => {
-    redisClient.get('admin', (err, socketId) => {
-      redisClient.set('drawer', socketId);
-      io.to(socketId).emit('resetBoard');
+    redisClient.get(room, (err, roomData) => {
+      let roomObj = JSON.parse(roomData);
+      if(roomObj.admin === socket.id){
+        let exDrawer = roomObj.drawer;
+        roomObj.drawer = roomObj.admin;
+        redisClient.set(room, JSON.stringify(roomObj));
+        io.to(socket.id).emit('resetBoard');
+        io.to(exDrawer).emit('lostPermission');
+      }
+    });
+  })
+
+  socket.on('disconnect', () => {
+    redisClient.get(room, (err, roomData) => {
+      let roomObj = JSON.parse(roomData);
+      if(socket.id === roomObj.admin){
+        if(io.sockets.adapter.rooms[room]){
+          var users = Object.keys(io.sockets.adapter.rooms[room].sockets);
+          for(let i=0; i<users.length; i++) {
+            io.to(users[i]).emit('hostLeft');
+            io.sockets.connected[users[i]].leave(room); 
+          }
+        }
+      } else {
+        socket.leave(room);
+      }
     });
   })
 });
