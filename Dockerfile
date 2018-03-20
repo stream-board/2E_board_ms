@@ -1,4 +1,4 @@
-FROM node:carbon-slim
+FROM node:8
 
 ENV REDIS_HOST "redis"
 
