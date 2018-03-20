@@ -1,6 +1,6 @@
 FROM node:8
 
-ENV REDIS_HOST "redis"
+ENV REDIS_HOST "board-db"
 
 RUN mkdir /board-ms
 WORKDIR /board-ms
