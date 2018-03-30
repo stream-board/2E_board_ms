@@ -1,7 +1,6 @@
-FROM node:9
+FROM node:8
 
-ENV REDIS_HOST "redis"
-ENV MASTER_KEY "masterKey"
+ENV REDIS_HOST "board-db"
 
 RUN mkdir /board-ms
 WORKDIR /board-ms

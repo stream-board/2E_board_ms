@@ -1,0 +1,68 @@
+#Test with: http://editor.swagger.io/
+
+swagger: '2.0'
+info:
+  version: 1.0.0
+  title: Microservice for board
+  description: NodeJS + Redis
+  license:
+    name: Software Architecture 2018-I
+host: 192.168.99.101:4002
+basePath: /
+schemes:
+  - http
+consumes:
+  - application/json
+produces:
+  - application/json
+paths:
+  /room:
+    post:
+      summary: Creates a new board room
+      operationId: createBoardRoom
+      parameters:
+        - name: room
+          in: body
+          required: true
+          description: Object with ID and admin
+          schema:
+            $ref: '#/definitions/BoardInput'
+      responses:
+        '200':
+          description: Created
+        '400':
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorModel'
+        '500':
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorModel'
+
+definitions:
+
+  BoardInput:
+    type: object
+    required:
+      - id
+      - admin
+    properties:
+      id:
+        type: integer
+      admin:
+        type: string
+
+
+# Errors
+  ErrorModel:
+    type: object
+    required:
+      - message
+      - code
+    properties:
+      message:
+        type: string
+      code:
+        type: number
+      description:
+        type: object

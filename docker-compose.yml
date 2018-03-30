@@ -1,11 +1,10 @@
 version: "2"
 services:
-    redis:
+    board-db:
         image: redis:latest
-
-    pj_board_ms:
+    board-ms:
         build: .
         ports:
-            - "8000:3000"
+            - "4002:3000"
         depends_on:
-            - redis
+            - board-db
