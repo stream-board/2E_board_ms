@@ -6,6 +6,9 @@ function initializeSocket(server){
         var room = socket.handshake['query']['room'];
         var nick = socket.handshake['query']['nick'];
         var id = socket.handshake['query']['id'];
+        console.log(room)
+        console.log(nick)
+        console.log(id)
       
         redisClient.get(room, (err, roomData) => {
           let roomObj = JSON.parse(roomData);
@@ -13,7 +16,10 @@ function initializeSocket(server){
             roomObj.admin = socket.id;
             roomObj.drawer = socket.id;
             redisClient.set(room, JSON.stringify(roomObj));
+            console.log(`Admin ${id} connected`)
             io.to(socket.id).emit('admin');
+          } else {
+            console.log(`User ${id} connected`)
           }
           
         });
