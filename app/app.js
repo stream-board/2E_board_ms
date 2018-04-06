@@ -12,6 +12,9 @@ setImmediate(() => {
     console.log('Express server listening on http://%s:%d, in %s mode', ip, port, env)
     initializeSocket(server)
   })
+  process.on('uncaughtException', function (err) {
+    console.log('Caught exception: ', err);
+  });
 })
 
 export default app
