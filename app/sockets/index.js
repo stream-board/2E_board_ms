@@ -38,6 +38,15 @@ function initializeSocket(server){
             }
           })
         })
+
+        socket.on('clear', () => {
+          redisClient.get(room, (err, roomData) => {
+            let roomObj = JSON.parse(roomData);
+            if(socket.id === roomObj.drawer){
+              socket.to(room).broadcast.emit('clear');
+            }
+          })
+        })
       
         socket.on('askForBoard', () => {
           redisClient.get(room, (err, roomData) => {
