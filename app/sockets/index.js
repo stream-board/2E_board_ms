@@ -67,6 +67,9 @@ function initializeSocket(server){
               roomObj.drawer = data.socketId;
               redisClient.set(room, JSON.stringify(roomObj));
               socket.to(exDrawer).emit('lostPermission',data.answer);
+              redisClient.get(socketId, (err, nick) => {
+                socket.to(room).broadcast.emit('newDrawer', nick)
+              })
             }
             socket.to(data.socketId).emit('answerForBoard',data.answer);
           })
@@ -80,8 +83,11 @@ function initializeSocket(server){
               let exDrawer = roomObj.drawer;
               roomObj.drawer = roomObj.admin;
               redisClient.set(room, JSON.stringify(roomObj));
-              io.to(socket.id).emit('resetBoard');
+              redisClient.get(socket.id, (err, nick) => {
+                socket.to(room).broadcast.emit('newDrawer', nick)
+              })
               io.to(exDrawer).emit('lostPermission');
+              io.to(socket.id).emit('resetBoard');
             }
           });
         })
