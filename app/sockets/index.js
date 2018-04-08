@@ -67,7 +67,7 @@ function initializeSocket(server){
               roomObj.drawer = data.socketId;
               redisClient.set(room, JSON.stringify(roomObj));
               socket.to(exDrawer).emit('lostPermission',data.answer);
-              redisClient.get(socketId, (err, nick) => {
+              redisClient.get(data.socketId, (err, nick) => {
                 socket.to(room).broadcast.emit('newDrawer', nick)
               })
             }
