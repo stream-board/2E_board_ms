@@ -9,8 +9,6 @@ function initializeSocket(server){
       
         redisClient.get(room, (err, roomData) => {
           let roomObj = JSON.parse(roomData);
-          console.log(`Admin ID: ${roomObj.adminId}`)
-          console.log(`User ID: ${id}`)
           if(roomObj.adminId == id){
             roomObj.adminId = id;
             roomObj.drawerSocket = socket.id;
@@ -103,7 +101,6 @@ function initializeSocket(server){
         })
       
         socket.on('disconnect', () => {
-          console.log(`User ${id} disconnected`)
           redisClient.get(room, (err, roomData) => {
             let roomObj = JSON.parse(roomData);
             if(socket.id === roomObj.adminSocket){
@@ -115,6 +112,7 @@ function initializeSocket(server){
                 }
               }
             } else {
+              io.to(room).emit('userDisconnected', nick)
               socket.leave(room);
             }
           });
