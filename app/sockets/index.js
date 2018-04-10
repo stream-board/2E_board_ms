@@ -77,7 +77,7 @@ function initializeSocket(server){
             let roomObj = JSON.parse(roomData);
             if(roomObj.adminSocket === socket.id){
               let exDrawer = roomObj.drawerSocket;
-              roomObj.drawer = roomObj.adminSocket;
+              roomObj.drawerSocket = roomObj.adminSocket;
               redisClient.set(room, JSON.stringify(roomObj));
               redisClient.get(socket.id, (err, nick) => {
                 io.to(room).emit('newDrawer', nick)
