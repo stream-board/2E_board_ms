@@ -19,8 +19,5 @@ router.route('/room')
             });
         })
     })
-    .get((req,res) => {
-        return 'Hey!'
-    })
 
 export default router

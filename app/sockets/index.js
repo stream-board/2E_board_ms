@@ -46,6 +46,7 @@ function initializeSocket(server){
         socket.on('askForBoard', () => {
           redisClient.get(room, (err, roomData) => {
             let roomObj = JSON.parse(roomData);
+            console.log(roomObj);
             redisClient.get(socket.id, (err, nick) => {
               if(socket.id !== roomObj.adminSocket){
                 socket.to(roomObj.adminSocket).emit('askForBoard', {nick: nick, socketId: socket.id});
