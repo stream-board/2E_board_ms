@@ -6,8 +6,9 @@ const router = new Router()
 router.route('/room')
     .post((req, res) => {
         let roomData = {
-            admin: req.body.admin,
-            drawer: req.body.admin
+            adminId: req.body.admin,
+            drawerSocket: req.body.admin,
+            adminSocket: req.body.admin 
         }
         redisClient.del(req.body.id, (err, reply) => {
             redisClient.set(req.body.id, JSON.stringify(roomData), (err) => {
@@ -17,9 +18,6 @@ router.route('/room')
                 res.json({id: parseInt(req.body.id)});
             });
         })
-    })
-    .get((req,res) => {
-        return 'Hey!'
     })
 
 export default router
