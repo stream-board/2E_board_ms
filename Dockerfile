@@ -10,5 +10,7 @@ COPY package.json /board-ms
 COPY package-lock.json /board-ms
 RUN npm install
 
+EXPOSE 4002
+
 CMD ["npm", "start"]
 
