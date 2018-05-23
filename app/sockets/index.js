@@ -1,9 +1,7 @@
 import redisClient from '../services/redis'
 
 function initializeSocket(server){
-    const io = require('socket.io')(server, {
-      path: '/board'
-    })
+    const io = require('socket.io')(server)
 
     io.on('connection', (socket) => {
         var room = socket.handshake['query']['room'];
